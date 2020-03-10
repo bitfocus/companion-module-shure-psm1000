@@ -55,8 +55,8 @@ class instance extends instance_skel {
 		];
 
 		this.CHOICES_RFMUTE = [
-			{id: '0', label: 'Mute',   value: 'Muted'},
-			{id: '1', label: 'Unmute', value: 'Unmuted'}
+			{id: '0', label: 'Unmute', value: 'Unmuted'},
+			{id: '1', label: 'Mute',   value: 'Muted'}
 		];
 
 		this.CHOICES_RFTXLEVEL = [
@@ -65,7 +65,7 @@ class instance extends instance_skel {
 			{id: '100', label: '100 mW'}
 		];
 
-		this.defineConst('REGEX_CHAR_8',  '/^\\d+{1,8}$/');
+		this.defineConst('REGEX_CHAR_8', '/^\\d{1,8}$/');
 
 		this.actions(); // export actions
 	}

@@ -119,7 +119,7 @@ class instance_api {
 			channel.rfTxLevel = value;
 			variable = value + ' mW';
 			this.instance.setVariable(prefix + 'rf_tx_level', variable);
-			this.checkFeedbacks('rf_tx_level');
+			this.instance.checkFeedbacks('rf_tx_level');
 		}
 		else if (key == 'RF_MUTE') {
 			switch(value) {
@@ -132,7 +132,7 @@ class instance_api {
 			}
 			channel.rfMute = value;
 			this.instance.setVariable(prefix + 'rf_mute', variable);
-			this.checkFeedbacks('rf_muted');
+			this.instance.checkFeedbacks('rf_muted');
 		}
 		else if (key == 'AUDIO_TX_MODE') {
 			switch(value) {
@@ -148,7 +148,7 @@ class instance_api {
 			}
 			channel.audioTxMode = value;
 			this.instance.setVariable(prefix + 'audio_tx_mode', variable);
-			this.checkFeedbacks('audio_tx_mode');
+			this.instance.checkFeedbacks('audio_tx_mode');
 		}
 		else if (key == 'AUDIO_IN_LINE_LVL') {
 			switch(value) {
@@ -161,7 +161,7 @@ class instance_api {
 			}
 			channel.audioInLineLevel = value;
 			this.instance.setVariable(prefix + 'audio_in_line_level', variable);
-			this.checkFeedbacks('audio_in_line_level');
+			this.instance.checkFeedbacks('audio_in_line_level');
 		}
 		else if (key == 'AUDIO_IN_LVL_L') {
 			channel.audioInLevelL = parseInt(value);

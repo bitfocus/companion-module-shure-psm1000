@@ -65,7 +65,7 @@ class instance extends instance_skel {
 			{id: '100', label: '100 mW'}
 		];
 
-		this.defineConst('REGEX_CHAR_8', '/^\\d{1,8}$/');
+		this.defineConst('REGEX_CHAR_8', '/^.{1,8}$/');
 
 		this.actions(); // export actions
 	}

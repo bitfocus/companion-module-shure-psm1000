@@ -47,7 +47,7 @@ module.exports = {
 					max: 0,
 					default: -16,
 					required: true,
-					range: true
+					range: false
 				}
 			]
 		};

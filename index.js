@@ -237,7 +237,23 @@ class instance extends instance_skel {
 
 			this.socket.on('connect', () => {
 				this.debug("Connected");
-				let cmd = '< GET 0 ALL >\r\n';
+				let cmd = '< GET DEVICE_NAME >\r\n';
+				cmd += '< GET 1 CHAN_NAME >\r\n';
+				cmd += '< GET 1 AUDIO_IN_LVL >\r\n';
+				cmd += '< GET 1 GROUP_CHAN >\r\n';
+				cmd += '< GET 1 FREQUENCY >\r\n';
+				cmd += '< GET 1 RF_TX_LVL >\r\n';
+				cmd += '< GET 1 RF_MUTE >\r\n';
+				cmd += '< GET 1 AUDIO_TX_MODE >\r\n';
+				cmd += '< GET 1 AUDIO_IN_LINE_LVL >\r\n';
+				cmd += '< GET 2 CHAN_NAME >\r\n';
+				cmd += '< GET 2 AUDIO_IN_LVL >\r\n';
+				cmd += '< GET 2 GROUP_CHAN >\r\n';
+				cmd += '< GET 2 FREQUENCY >\r\n';
+				cmd += '< GET 2 RF_TX_LVL >\r\n';
+				cmd += '< GET 2 RF_MUTE >\r\n';
+				cmd += '< GET 2 AUDIO_TX_MODE >\r\n';
+				cmd += '< GET 2 AUDIO_IN_LINE_LVL >\r\n';
 
 				if (this.config.meteringOn === true) {
 					cmd += '< SET 1 METER_RATE ' + this.config.meteringInterval + ' >\r\n';

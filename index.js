@@ -96,13 +96,13 @@ class instance extends instance_skel {
 
 		switch (action.action) {
 			case 'set_channel_name':
-				cmd = 'SET ' + options.channel + ' CHAN_NAME ' + options.name.substr(0,8);
+				cmd = 'SET ' + options.channel + ' CHAN_NAME ' + options.name;
 				break;
 			case 'set_audio_in_level':
 				cmd = 'SET ' + options.channel + ' AUDIO_IN_LVL ' + options.value;
 				break;
 			case 'set_frequency':
-				cmd = 'SET ' + options.channel + ' FREQUENCY ' + options.value;
+				cmd = 'SET ' + options.channel + ' FREQUENCY ' + options.value.replace('.','');
 				break;
 			case 'set_rf_tx_level':
 				cmd = 'SET ' + options.channel + ' RF_TX_LVL ' + options.value;

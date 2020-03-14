@@ -63,13 +63,11 @@ module.exports = {
 					choices: this.CHOICES_CHANNELS
 				},
 				{
-					type: 'number',
+					type: 'textinput',
 					label: 'Frequency (MHz)',
 					id: 'value',
-					min: 470000,
-					max: 937500,
-					default: 470000,
-					required: true
+					default: '470.000',
+					regex: '/^(4[7-9][0-9]|[5-8][0-9]{2}|9[0-2][0-9]|93[0-7])\\.\\d(00|25|50|75)$/'
 				}
 			]
 		};

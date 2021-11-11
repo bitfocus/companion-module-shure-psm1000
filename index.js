@@ -118,9 +118,6 @@ class instance extends instance_skel {
 	 * @since 1.0.0
 	 */
 	init() {
-		debug = this.debug
-		log = this.log
-
 		this.status(this.STATUS_WARNING, 'Connecting')
 
 		this.initVariables()

@@ -24,6 +24,9 @@ class instance extends instance_skel {
 		this.deviceName = ''
 		this.initDone = false
 
+		this.heartbeatInterval = null
+		this.heartbeatTimeout = null
+
 		let instance_api = require('./internalAPI')
 		let actions = require('./actions')
 		let feedback = require('./feedback')
@@ -107,6 +110,14 @@ class instance extends instance_skel {
 			this.socket.destroy()
 		}
 
+		if (this.heartbeatInterval !== undefined) {
+			clearInterval(this.heartbeatInterval)
+		}
+
+		if (this.heartbeatTimeout !== undefined) {
+			clearTimeout(this.heartbeatTimeout)
+		}
+
 		this.debug('destroy', this.id)
 	}
 
@@ -138,6 +149,14 @@ class instance extends instance_skel {
 		if (this.socket !== undefined) {
 			this.socket.destroy()
 			delete this.socket
+		}
+
+		if (this.heartbeatInterval !== undefined) {
+			clearInterval(this.heartbeatInterval)
+		}
+
+		if (this.heartbeatTimeout !== undefined) {
+			clearTimeout(this.heartbeatTimeout)
 		}
 
 		if (this.config.port === undefined) {
@@ -183,6 +202,10 @@ class instance extends instance_skel {
 
 				this.socket.send(cmd)
 
+				this.heartbeatInterval = setInterval(() => {
+					this.socket.send('< GET 1 METER_RATE >\r\n')
+				}, 30000)
+
 				this.initActions() // export actions
 			})
 
@@ -204,6 +227,14 @@ class instance extends instance_skel {
 
 			this.socket.on('receiveline', (line) => {
 				this.processShureCommand(line.replace('< ', '').trim())
+
+				if (line.match(/METER_RATE/)) {
+					if (this.heartbeatTimeout !== undefined) {
+						clearTimeout(this.heartbeatTimeout)
+					}
+
+					this.heartbeatTimeout = setTimeout(this.initTCP.bind(this), 60000)
+				}
 			})
 		}
 	}

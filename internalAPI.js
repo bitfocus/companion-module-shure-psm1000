@@ -86,7 +86,7 @@ class instance_api {
 		if (key == 'CHAN_NAME') {
 			channel.name = value
 			this.instance.setVariable(prefix + 'name', channel.name)
-			this.instance.actions()
+			this.instance.initActions()
 			this.instance.initFeedbacks()
 		} else if (key == 'METER_RATE') {
 			channel.meterRate = parseInt(value)

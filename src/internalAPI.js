@@ -174,5 +174,3 @@ export default class Psm1000Api {
 		}
 	}
 }
-
-exports = module.exports = instance_api

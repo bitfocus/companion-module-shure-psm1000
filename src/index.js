@@ -177,7 +177,7 @@ class ShurePsm1000Instance extends InstanceBase {
 	 * @since 1.0.0
 	 */
 	initTCP() {
-		var receivebuffer = ''
+		this.receiveBuffer = ''
 
 		if (this.socket !== undefined) {
 			this.socket.destroy()
@@ -247,15 +247,15 @@ class ShurePsm1000Instance extends InstanceBase {
 				let i = 0,
 					line = '',
 					offset = 0
-				receivebuffer += chunk
+				this.receiveBuffer += chunk
 
-				while ((i = receivebuffer.indexOf('>', offset)) !== -1) {
-					line = receivebuffer.substr(offset, i - offset)
+				while ((i = this.receiveBuffer.indexOf('>', offset)) !== -1) {
+					line = this.receiveBuffer.substr(offset, i - offset)
 					offset = i + 1
 					this.socket.emit('receiveline', line.toString())
 				}
 
-				receivebuffer = receivebuffer.substr(offset)
+				this.receiveBuffer = this.receiveBuffer.substr(offset)
 			})
 
 			this.socket.on('receiveline', (line) => {

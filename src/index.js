@@ -1,58 +1,98 @@
-var tcp = require('../../tcp')
-var instance_skel = require('../../instance_skel')
-var upgrades = require('./upgrades')
+import {
+	CreateConvertToBooleanFeedbackUpgradeScript,
+	InstanceBase,
+	Regex,
+	runEntrypoint,
+	TCPHelper,
+} from '@companion-module/base'
+import { updateActions } from './actions.js'
+import { updateFeedbacks } from './feedback.js'
+import { updateVariables } from './variables.js'
+import Psm1000Api from './internalAPI.js'
+import { BooleanFeedbackUpgradeMap } from './upgrades.js'
 
 /**
  * Companion instance class for the Shure PSM1000 Wireless IEM.
  *
- * @extends instance_skel
+ * @extends InstanceBase
  * @since 1.0.0
  * @author Keith Rocheck <keith.rocheck@gmail.com>
  */
-class instance extends instance_skel {
+class ShurePsm1000Instance extends InstanceBase {
 	/**
 	 * Create an instance of a shure psm1000 module.
 	 *
-	 * @param {EventEmitter} system - the brains of the operation
-	 * @param {string} id - the instance ID
-	 * @param {Object} config - saved user configuration parameters
+	 * @param {Object} internal - Companion internals
 	 * @since 1.0.0
 	 */
-	constructor(system, id, config) {
-		super(system, id, config)
+	constructor(internal) {
+		super(internal)
 
-		this.deviceName = ''
-		this.initDone = false
-
-		this.heartbeatInterval = null
-		this.heartbeatTimeout = null
-
-		let instance_api = require('./internalAPI')
-		let actions = require('./actions')
-		let feedback = require('./feedback')
-		let variables = require('./variables')
-
-		Object.assign(this, {
-			...actions,
-			...feedback,
-			...variables,
-		})
-
-		this.api = new instance_api(this)
-
-		this.setupFields()
-
-		this.initActions() // export actions
+		this.updateActions = updateActions.bind(this)
+		this.updateFeedbacks = updateFeedbacks.bind(this)
+		this.updateVariables = updateVariables.bind(this)
 	}
 
 	/**
-	 * Provide the upgrade scripts for the module
-	 * @returns {function[]} the scripts
-	 * @static
-	 * @since 1.1.0
+	 * Process an updated configuration array.
+	 *
+	 * @param {Object} config - the new configuration
+	 * @access public
+	 * @since 1.0.0
 	 */
-	static GetUpgradeScripts() {
-		return [instance_skel.CreateConvertToBooleanFeedbackUpgradeScript(upgrades.BooleanFeedbackUpgradeMap)]
+	async configUpdated(config) {
+		let resetConnection = false
+		let cmd
+
+		if (this.config.host != config.host) {
+			resetConnection = true
+		}
+
+		if (this.config.meteringOn !== config.meteringOn) {
+			if (config.meteringOn === true) {
+				cmd = `< SET 1 METER_RATE ${this.config.meteringInterval} >\r\n`
+				cmd += `< SET 2 METER_RATE ${this.config.meteringInterval} >\r\n`
+			} else {
+				cmd = '< SET 1 METER_RATE 0 >\r\n< SET 2 METER_RATE 0 >\r\n'
+			}
+		} else if (this.config.meteringRate != config.meteringRate && this.config.meteringOn === true) {
+			cmd = `< SET 1 METER_RATE ${config.meteringInterval} >\r\n`
+			cmd += `< SET 2 METER_RATE ${config.meteringInterval} >\r\n`
+		}
+
+		this.config = config
+
+		this.updateActions()
+		this.updateFeedbacks()
+		this.updateVariables()
+
+		if (resetConnection === true || this.socket === undefined) {
+			this.initTCP()
+		} else if (cmd !== undefined) {
+			this.socket.send(cmd)
+		}
+	}
+
+	/**
+	 * Clean up the instance before it is destroyed.
+	 *
+	 * @access public
+	 * @since 1.0.0
+	 */
+	async destroy() {
+		if (this.socket !== undefined) {
+			this.socket.destroy()
+		}
+
+		if (this.heartbeatInterval !== undefined) {
+			clearInterval(this.heartbeatInterval)
+		}
+
+		if (this.heartbeatTimeout !== undefined) {
+			clearTimeout(this.heartbeatTimeout)
+		}
+
+		this.log('debug', 'destroy', this.id)
 	}
 
 	/**
@@ -62,14 +102,14 @@ class instance extends instance_skel {
 	 * @access public
 	 * @since 1.0.0
 	 */
-	config_fields() {
+	getConfigFields() {
 		return [
 			{
 				type: 'textinput',
 				id: 'host',
 				label: 'Target IP',
 				width: 6,
-				regex: this.REGEX_IP,
+				regex: Regex.IP,
 			},
 			{
 				type: 'textinput',
@@ -77,7 +117,7 @@ class instance extends instance_skel {
 				label: 'Target Port',
 				default: 2202,
 				width: 2,
-				regex: this.REGEX_PORT,
+				regex: Regex.PORT,
 			},
 			{
 				type: 'checkbox',
@@ -100,39 +140,32 @@ class instance extends instance_skel {
 	}
 
 	/**
-	 * Clean up the instance before it is destroyed.
-	 *
-	 * @access public
-	 * @since 1.0.0
-	 */
-	destroy() {
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-		}
-
-		if (this.heartbeatInterval !== undefined) {
-			clearInterval(this.heartbeatInterval)
-		}
-
-		if (this.heartbeatTimeout !== undefined) {
-			clearTimeout(this.heartbeatTimeout)
-		}
-
-		this.debug('destroy', this.id)
-	}
-
-	/**
 	 * Main initialization function called once the module
 	 * is OK to start doing things.
 	 *
+	 * @param {Object} config - the configuration
 	 * @access public
 	 * @since 1.0.0
 	 */
-	init() {
-		this.status(this.STATUS_WARNING, 'Connecting')
+	async init(config) {
+		this.config = config
+		this.deviceName = ''
+		this.initDone = false
 
-		this.initVariables()
-		this.initFeedbacks()
+		this.heartbeatInterval = null
+		this.heartbeatTimeout = null
+
+		this.CHOICES_CHANNELS = []
+
+		this.updateStatus('disconnected', 'Connecting')
+
+		this.api = new Psm1000Api(this)
+
+		this.setupFields()
+
+		this.updateActions()
+		this.updateVariables()
+		this.updateFeedbacks()
 
 		this.initTCP()
 	}
@@ -144,7 +177,7 @@ class instance extends instance_skel {
 	 * @since 1.0.0
 	 */
 	initTCP() {
-		var receivebuffer = ''
+		this.receiveBuffer = ''
 
 		if (this.socket !== undefined) {
 			this.socket.destroy()
@@ -164,19 +197,18 @@ class instance extends instance_skel {
 		}
 
 		if (this.config.host) {
-			this.socket = new tcp(this.config.host, this.config.port)
+			this.socket = new TCPHelper(this.config.host, this.config.port)
 
 			this.socket.on('status_change', (status, message) => {
-				this.status(status, message)
+				this.updateStatus(status, message)
 			})
 
 			this.socket.on('error', (err) => {
-				this.debug('Network error', err)
 				this.log('error', `Network error: ${err.message}`)
 			})
 
 			this.socket.on('connect', () => {
-				this.debug('Connected')
+				this.log('debug', 'Connected')
 				let cmd = '< GET DEVICE_NAME >\r\n'
 				cmd += '< GET 1 CHAN_NAME >\r\n'
 				cmd += '< GET 1 AUDIO_IN_LVL >\r\n'
@@ -206,23 +238,24 @@ class instance extends instance_skel {
 					this.socket.send('< GET 1 METER_RATE >\r\n')
 				}, 30000)
 
-				this.initActions() // export actions
+				this.updateActions()
+				this.updateFeedbacks()
 			})
 
 			// separate buffered stream into lines with responses
 			this.socket.on('data', (chunk) => {
-				var i = 0,
+				let i = 0,
 					line = '',
 					offset = 0
-				receivebuffer += chunk
+				this.receiveBuffer += chunk
 
-				while ((i = receivebuffer.indexOf('>', offset)) !== -1) {
-					line = receivebuffer.substr(offset, i - offset)
+				while ((i = this.receiveBuffer.indexOf('>', offset)) !== -1) {
+					line = this.receiveBuffer.substr(offset, i - offset)
 					offset = i + 1
 					this.socket.emit('receiveline', line.toString())
 				}
 
-				receivebuffer = receivebuffer.substr(offset)
+				this.receiveBuffer = this.receiveBuffer.substr(offset)
 			})
 
 			this.socket.on('receiveline', (line) => {
@@ -277,7 +310,7 @@ class instance extends instance_skel {
 			if (this.socket !== undefined && this.socket.connected) {
 				this.socket.send(`< ${cmd} >\r\n`)
 			} else {
-				this.debug('Socket not connected :(')
+				this.log('debug', 'Socket not connected :(')
 			}
 		}
 	}
@@ -291,8 +324,8 @@ class instance extends instance_skel {
 	setupChannelChoices() {
 		this.CHOICES_CHANNELS = []
 
-		for (var i = 1; i <= 2; i++) {
-			var data = `Channel ${i}`
+		for (let i = 1; i <= 2; i++) {
+			let data = `Channel ${i}`
 
 			if (this.api.getChannel(i).name != '') {
 				data += ` (${this.api.getChannel(i).name})`
@@ -311,29 +344,6 @@ class instance extends instance_skel {
 	 * @since 1.1.0
 	 */
 	setupFields() {
-		this.CHOICES_CHANNELS = []
-
-		this.AUDIOINLINELEVEL_FIELD = {
-			type: 'dropdown',
-			label: 'Mode',
-			id: 'value',
-			default: '1',
-			choices: [
-				{ id: '0', label: 'Aux (-10 dB)' },
-				{ id: '1', label: 'Line (+4 dB)' },
-			],
-		}
-		this.AUDIOTXMODE_FIELD = {
-			type: 'dropdown',
-			label: 'Mode',
-			id: 'value',
-			default: '1',
-			choices: [
-				{ id: '1', label: 'Mono' },
-				{ id: '2', label: 'Point to point' },
-				{ id: '3', label: 'Stereo' },
-			],
-		}
 		this.CHANNELS_FIELD = {
 			type: 'dropdown',
 			label: 'Channel Number',
@@ -341,92 +351,7 @@ class instance extends instance_skel {
 			default: '1',
 			choices: this.CHOICES_CHANNELS,
 		}
-		this.FREQUENCY_FIELD = {
-			type: 'textinput',
-			label: 'Frequency (MHz)',
-			id: 'value',
-			default: '470.000',
-			regex: '/^(4[7-9][0-9]|[5-8][0-9]{2}|9[0-2][0-9]|93[0-7])\\.\\d(00|25|50|75)$/',
-		}
-		this.GAIN_SET_FIELD = {
-			type: 'number',
-			label: 'Value (dB)',
-			id: 'value',
-			min: -67,
-			max: 0,
-			default: -16,
-			required: true,
-			range: false,
-		}
-		this.NAME_FIELD = {
-			type: 'textinput',
-			label: 'Name (8 characters max)',
-			id: 'name',
-			default: '',
-			regex: '/^.{1,8}$/',
-		}
-		this.RFMUTE_FIELD = {
-			type: 'dropdown',
-			label: 'State',
-			id: 'value',
-			default: '0',
-			choices: [
-				{ id: '0', label: 'Unmute', value: 'Unmuted' },
-				{ id: '1', label: 'Mute', value: 'Muted' },
-			],
-		}
-		this.RFTXLEVEL_FIELD = {
-			type: 'dropdown',
-			label: 'Level (mW)',
-			id: 'value',
-			default: '10',
-			choices: [
-				{ id: '10', label: '10 mW' },
-				{ id: '50', label: '50 mW' },
-				{ id: '100', label: '100 mW' },
-			],
-		}
-	}
-
-	/**
-	 * Process an updated configuration array.
-	 *
-	 * @param {Object} config - the new configuration
-	 * @access public
-	 * @since 1.0.0
-	 */
-	updateConfig(config) {
-		var resetConnection = false
-		var cmd
-
-		if (this.config.host != config.host) {
-			resetConnection = true
-		}
-
-		if (this.config.meteringOn !== config.meteringOn) {
-			if (config.meteringOn === true) {
-				cmd = `< SET 1 METER_RATE ${this.config.meteringInterval} >\r\n`
-				cmd += `< SET 2 METER_RATE ${this.config.meteringInterval} >\r\n`
-			} else {
-				cmd = '< SET 1 METER_RATE 0 >\r\n< SET 2 METER_RATE 0 >\r\n'
-			}
-		} else if (this.config.meteringRate != config.meteringRate && this.config.meteringOn === true) {
-			cmd = `< SET 1 METER_RATE ${config.meteringInterval} >\r\n`
-			cmd += `< SET 2 METER_RATE ${config.meteringInterval} >\r\n`
-		}
-
-		this.config = config
-
-		this.initActions()
-		this.initFeedbacks()
-		this.initVariables()
-
-		if (resetConnection === true || this.socket === undefined) {
-			this.initTCP()
-		} else if (cmd !== undefined) {
-			this.socket.send(cmd)
-		}
 	}
 }
 
-exports = module.exports = instance
+runEntrypoint(ShurePsm1000Instance, [CreateConvertToBooleanFeedbackUpgradeScript(BooleanFeedbackUpgradeMap)])

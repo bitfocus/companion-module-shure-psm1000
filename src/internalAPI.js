@@ -2,12 +2,10 @@
  * Companion instance API class for Shure PSM1000.
  * Utilized to track the state of the receiver and channels.
  *
- * @version 1.0.0
  * @since 1.0.0
- * @author Joseph Adams <josephdadams@gmail.com>
  * @author Keith Rocheck <keith.rocheck@gmail.com>
  */
-class instance_api {
+export default class Psm1000Api {
 	/**
 	 * Create an instance of a Shure API module.
 	 *
@@ -75,9 +73,9 @@ class instance_api {
 	 * @since 1.0.0
 	 */
 	updateChannel(id, key, value) {
-		var channel = this.getChannel(id)
-		var prefix = 'ch_' + id + '_'
-		var variable
+		let channel = this.getChannel(id)
+		let prefix = 'ch_' + id + '_'
+		let variable
 
 		if (value == 'UNKN' || value == 'UNKNOWN') {
 			value = 'Unknown'
@@ -85,29 +83,29 @@ class instance_api {
 
 		if (key == 'CHAN_NAME') {
 			channel.name = value
-			this.instance.setVariable(prefix + 'name', channel.name)
+			this.instance.setVariableValues({ [`${prefix}name`]: channel.name })
 			this.instance.initActions()
 			this.instance.initFeedbacks()
 		} else if (key == 'METER_RATE') {
 			channel.meterRate = parseInt(value)
-			this.instance.setVariable(prefix + 'meter', variable)
+			this.instance.setVariableValues({ [`${prefix}meter`]: variable })
 		} else if (key == 'AUDIO_IN_LVL') {
 			channel.audioGain = parseInt(value)
 			variable = channel.audioGain.toString() + ' dB'
-			this.instance.setVariable(prefix + 'audio_in_level', variable)
+			this.instance.setVariableValues({ [`${prefix}audio_in_level`]: variable })
 		} else if (key.match(/GROUP_CHAN/)) {
-			this.instance.setVariable(prefix + 'group_chan', value)
+			this.instance.setVariableValues({ [`${prefix}group_chan`]: value })
 			variable = value.split(',')
 			channel.group = variable[0]
 			channel.channel = variable[1]
 		} else if (key == 'FREQUENCY') {
 			channel.frequency = value
 			variable = value.substr(0, 3) + '.' + value.substr(3, 3) + ' MHz'
-			this.instance.setVariable(prefix + 'frequency', variable)
+			this.instance.setVariableValues({ [`${prefix}frequency`]: variable })
 		} else if (key == 'RF_TX_LEVEL') {
 			channel.rfTxLevel = value
 			variable = value + ' mW'
-			this.instance.setVariable(prefix + 'rf_tx_level', variable)
+			this.instance.setVariableValues({ [`${prefix}rf_tx_level`]: variable })
 			this.instance.checkFeedbacks('rf_tx_level')
 		} else if (key == 'RF_MUTE') {
 			switch (value) {
@@ -119,7 +117,7 @@ class instance_api {
 					break
 			}
 			channel.rfMute = value
-			this.instance.setVariable(prefix + 'rf_mute', variable)
+			this.instance.setVariableValues({ [`${prefix}rf_mute`]: variable })
 			this.instance.checkFeedbacks('rf_muted')
 		} else if (key == 'AUDIO_TX_MODE') {
 			switch (value) {
@@ -134,7 +132,7 @@ class instance_api {
 					break
 			}
 			channel.audioTxMode = value
-			this.instance.setVariable(prefix + 'audio_tx_mode', variable)
+			this.instance.setVariableValues({ [`${prefix}audio_tx_mode`]: variable })
 			this.instance.checkFeedbacks('audio_tx_mode')
 		} else if (key == 'AUDIO_IN_LINE_LVL') {
 			switch (value) {
@@ -146,14 +144,14 @@ class instance_api {
 					break
 			}
 			channel.audioInLineLevel = value
-			this.instance.setVariable(prefix + 'audio_in_line_level', variable)
+			this.instance.setVariableValues({ [`${prefix}audio_in_line_level`]: variable })
 			this.instance.checkFeedbacks('audio_in_line_level')
 		} else if (key == 'AUDIO_IN_LVL_L') {
 			channel.audioInLevelL = parseInt(value)
-			this.instance.setVariable(prefix + 'audio_in_level_l', channel.audioInLevelL)
+			this.instance.setVariableValues({ [`${prefix}audio_in_level_l`]: channel.audioInLevelL })
 		} else if (key == 'AUDIO_IN_LVL_R') {
 			channel.audioInLevelR = parseInt(value)
-			this.instance.setVariable(prefix + 'audio_in_level_r', channel.audioInLevelR)
+			this.instance.setVariableValues({ [`${prefix}audio_in_level_r`]: channel.audioInLevelR })
 		}
 	}
 
@@ -172,9 +170,7 @@ class instance_api {
 
 		if (key == 'DEVICE_NAME') {
 			this.receiver.deviceId = value
-			this.instance.setVariable('device_id', this.receiver.deviceId)
+			this.instance.setVariableValues({ device_id: this.receiver.deviceId })
 		}
 	}
 }
-
-exports = module.exports = instance_api

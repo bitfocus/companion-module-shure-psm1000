@@ -19,11 +19,7 @@ export function updateFeedbacks() {
 			},
 			options: [this.CHANNELS_FIELD, Fields.RfTxLevel],
 			callback: ({ options }) => {
-				if (this.api.getChannel(parseInt(options.channel)).rfTxLevel == options.value) {
-					return true
-				} else {
-					return false
-				}
+				return this.api.getChannel(parseInt(options.channel)).rfTxLevel == options.value
 			},
 		},
 		rf_muted: {
@@ -36,11 +32,7 @@ export function updateFeedbacks() {
 			},
 			options: [this.CHANNELS_FIELD, Fields.RfMute],
 			callback: ({ options }) => {
-				if (this.api.getChannel(parseInt(options.channel)).rfMute == options.value) {
-					return true
-				} else {
-					return false
-				}
+				return this.api.getChannel(parseInt(options.channel)).rfMute == options.value
 			},
 		},
 		audio_tx_mode: {
@@ -53,11 +45,7 @@ export function updateFeedbacks() {
 			},
 			options: [this.CHANNELS_FIELD, Fields.AudioTxMode],
 			callback: ({ options }) => {
-				if (this.api.getChannel(parseInt(options.channel)).audioTxMode == options.value) {
-					return true
-				} else {
-					return false
-				}
+				return this.api.getChannel(parseInt(options.channel)).audioTxMode == options.value
 			},
 		},
 		audio_in_line_level: {
@@ -70,11 +58,7 @@ export function updateFeedbacks() {
 			},
 			options: [this.CHANNELS_FIELD, Fields.AudioInLineLevel],
 			callback: ({ options }) => {
-				if (this.api.getChannel(parseInt(options.channel)).audioInLineLevel == options.value) {
-					return true
-				} else {
-					return false
-				}
+				return this.api.getChannel(parseInt(options.channel)).audioInLineLevel == options.value
 			},
 		},
 	})

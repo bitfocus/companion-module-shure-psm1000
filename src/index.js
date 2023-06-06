@@ -116,7 +116,7 @@ class ShurePsm1000Instance extends InstanceBase {
 				id: 'port',
 				label: 'Target Port',
 				default: 2202,
-				width: 2,
+				width: 3,
 				regex: Regex.PORT,
 			},
 			{
@@ -307,7 +307,7 @@ class ShurePsm1000Instance extends InstanceBase {
 	 */
 	sendCommand(cmd) {
 		if (cmd !== undefined) {
-			if (this.socket !== undefined && this.socket.connected) {
+			if (this.socket !== undefined && this.socket.isConnected) {
 				this.socket.send(`< ${cmd} >\r\n`)
 			} else {
 				this.log('debug', 'Socket not connected :(')

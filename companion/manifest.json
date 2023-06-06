@@ -3,7 +3,7 @@
 	"name": "shure-psm1000",
 	"shortname": "shure-psm1000",
 	"description": "",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-shure-psm1000.git",
 	"bugs": "https://github.com/bitfocus/companion-module-shure-psm1000/issues",

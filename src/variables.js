@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 export function updateVariables() {
-	let variables = []
+	let variables = [{ variableId: 'device_id', name: 'Device ID' }]
 
 	for (let i = 1; i <= 2; i++) {
 		let prefix = `ch_${i}`
@@ -21,8 +21,6 @@ export function updateVariables() {
 		variables.push({ variableId: `${prefix}_audio_in_level_l`, name: `Channel ${i} Audio In Level L` })
 		variables.push({ variableId: `${prefix}_audio_in_level_r`, name: `Channel ${i} Audio In Level R` })
 	}
-
-	variables.push({ variableId: 'device_id', name: 'Device ID' })
 
 	this.setVariableDefinitions(variables)
 }

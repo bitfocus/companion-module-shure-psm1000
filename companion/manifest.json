@@ -3,7 +3,7 @@
 	"name": "shure-psm1000",
 	"shortname": "shure-psm1000",
 	"description": "",
-	"version": "2.0.1",
+	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-shure-psm1000.git",
 	"bugs": "https://github.com/bitfocus/companion-module-shure-psm1000/issues",
@@ -18,7 +18,7 @@
 		"type": "node18",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
-		"entrypoint": "..\\src\\index.js"
+		"entrypoint": "../src/index.js"
 	},
 	"manufacturer": "Shure",
 	"products": ["PSM1000"],

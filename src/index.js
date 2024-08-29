@@ -149,7 +149,6 @@ class ShurePsm1000Instance extends InstanceBase {
 	 */
 	async init(config) {
 		this.config = config
-		this.deviceName = ''
 		this.initDone = false
 
 		this.heartbeatInterval = null

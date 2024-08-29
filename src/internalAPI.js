@@ -84,8 +84,8 @@ export default class Psm1000Api {
 		if (key == 'CHAN_NAME') {
 			channel.name = value
 			this.instance.setVariableValues({ [`${prefix}name`]: channel.name })
-			this.instance.initActions()
-			this.instance.initFeedbacks()
+			this.instance.updateActions()
+			this.instance.updateFeedbacks()
 		} else if (key == 'METER_RATE') {
 			channel.meterRate = parseInt(value)
 			this.instance.setVariableValues({ [`${prefix}meter`]: variable })
